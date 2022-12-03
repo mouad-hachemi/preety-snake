@@ -5,6 +5,7 @@ import sys, pygame, random
 WHITE = (255, 255, 255)
 GRAY = pygame.Color("#cad2c5")
 WARM_BLUE = pygame.Color("#1e6091")
+OCEAN_GREAN = pygame.Color("#52B69A")
 
 # Screen Dimensions.
 WIDTH = 992
@@ -54,13 +55,29 @@ class Snake(pygame.sprite.Sprite):
         self.rect.y += self.vel[1] * GRID_SIZE  # The Yth value of vel.
 
 
+class Fruit(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
+        self.image.fill(OCEAN_GREAN)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(
+            BOUNDARIES["LeftX"], BOUNDARIES["RightX"] - GRID_SIZE, GRID_SIZE
+        )
+        self.rect.y = random.randrange(
+            BOUNDARIES["TopY"], BOUNDARIES["BottomY"] - GRID_SIZE, GRID_SIZE
+        )
+
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pretty Snake!")
 
 all_sprites = pygame.sprite.Group()
 
 snake = Snake()
+fruit = Fruit()
 
+all_sprites.add(fruit)
 all_sprites.add(snake)
 
 
