@@ -1,0 +1,4 @@
+# Files and Folder to be ignored in git commits.
+.vscode/
+__pycache__/
+*.py[cod]
