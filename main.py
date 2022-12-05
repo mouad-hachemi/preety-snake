@@ -1,10 +1,15 @@
 # Simple snake game made with Pygame library.
 import sys, pygame, random
 from pygame.math import Vector2
+from os import path
+
+# Paths
+fonts_dir = path.join(path.dirname(__file__), "fonts")
 
 # Colors
 WHITE = (255, 255, 255)
 GRAY = pygame.Color("#cad2c5")
+DARK_GRAY = pygame.Color("#4C4E52")
 HEAD_COLOR = pygame.Color("#168AAD")
 BODY_COLOR = pygame.Color("#34A0A4")
 FRUIT_COLOR = pygame.Color("#76C893")
@@ -57,6 +62,23 @@ def draw_grid():
         )
 
 
+def draw_go_text(surface):
+    text = font48.render("You Loose! Press Space to play again.", False, DARK_GRAY)
+    text_rect = text.get_rect()
+    text_rect.centerx = WIDTH // 2
+    text_rect.centery = HEIGHT // 2
+    surface.blit(text, text_rect)
+    pygame.display.flip()
+
+
+def draw_score(surface, text):
+    text = font.render(text, False, DARK_GRAY)
+    text_rect = text.get_rect()
+    text_rect.x = 8
+    text_rect.y = 8
+    surface.blit(text, text_rect)
+
+
 class Snake:
     def __init__(self):
         super().__init__()
@@ -102,6 +124,7 @@ class Snake:
             self.move_body()
         else:
             self.eat()
+
     def eat(self):
         new_head = fruit.pos + self.vel
         self.body = [new_head] + self.body
@@ -121,6 +144,12 @@ class Snake:
         elif self.head.y < 1 or self.head.y >= NUM_OF_GRIDS_Y - 1:
             return True
         return False
+
+    def reset(self):
+        self.body = [self.spawn_head()]
+        self.head = self.body[0]
+        self.vel = Vector2(0, 0)
+        self.new_block = False
 
 
 class Fruit:
@@ -149,36 +178,57 @@ class Fruit:
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pretty Snake!")
 
+# Loading fonts.
+font = pygame.font.Font(path.join(fonts_dir, "KenneyHighSquare.ttf"), 22)
+font48 = pygame.font.Font(path.join(fonts_dir, "KenneyHighSquare.ttf"), 48)
+
 snake = Snake()
 
 fruit = Fruit()
 
 
 def main():
+    game_over = False
     while True:
+        clock.tick(FPS)
         # Process Input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit_game()
             elif event.type == pygame.KEYDOWN:
                 snake.vel = {
-                    pygame.K_UP: Vector2(0, -1),
-                    pygame.K_RIGHT: Vector2(1, 0),
-                    pygame.K_DOWN: Vector2(0, 1),
-                    pygame.K_LEFT: Vector2(-1, 0),
+                    pygame.K_UP: Vector2(0, -1)
+                    if snake.vel != Vector2(0, 1)
+                    else snake.vel,
+                    pygame.K_RIGHT: Vector2(1, 0)
+                    if snake.vel != Vector2(-1, 0)
+                    else snake.vel,
+                    pygame.K_DOWN: Vector2(0, 1)
+                    if snake.vel != Vector2(0, -1)
+                    else snake.vel,
+                    pygame.K_LEFT: Vector2(-1, 0)
+                    if snake.vel != Vector2(1, 0)
+                    else snake.vel,
                 }.get(event.key, Vector2(0, 0))
-
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    game_over = False
+        if game_over:
+            draw_go_text(screen)
+            continue
         # Update
         snake.update()
         if snake.check_fail():
-            quit_game()
+            snake.reset()
+            game_over = True
+            continue
         # Draw
         screen.fill(WHITE)
         draw_grid()
         fruit.draw(screen)
         snake.draw(screen)
+        draw_score(screen, f"Score: {str(len(snake.body) - 1)}")
         pygame.display.flip()
-        clock.tick(FPS)
 
 
 if __name__ == "__main__":
