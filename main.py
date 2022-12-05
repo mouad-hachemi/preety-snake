@@ -35,24 +35,6 @@ pygame.mixer.init()
 clock = pygame.time.Clock()
 
 
-def spawn_head():
-    x = random.randrange(
-        2,
-        NUM_OF_GRIDS_X - 2,
-    )
-    y = random.randrange(
-        2,
-        NUM_OF_GRIDS_Y - 2,
-    )
-    return Vector2(x, y)
-
-
-def spawn_fruit():
-    x = random.randrange(1, NUM_OF_GRIDS_X - 1)
-    y = random.randrange(1, NUM_OF_GRIDS_Y - 1)
-    return Vector2(x, y)
-
-
 def quit_game():
     pygame.quit()
     sys.exit()
@@ -75,18 +57,10 @@ def draw_grid():
         )
 
 
-def is_out(head):
-    if head.x < 1 or head.x >= NUM_OF_GRIDS_X - 1:
-        return True
-    elif head.y < 1 or head.y >= NUM_OF_GRIDS_Y - 1:
-        return True
-    return False
-
-
 class Snake:
     def __init__(self):
         super().__init__()
-        self.body = [spawn_head()]
+        self.body = [self.spawn_head()]
         self.head = self.body[0]
         self.vel = Vector2(0, 0)
         self.new_block = False
@@ -103,6 +77,17 @@ class Snake:
                 image.fill(BODY_COLOR)
             surface.blit(image, rect)
 
+    def spawn_head(self):
+        x = random.randrange(
+            2,
+            NUM_OF_GRIDS_X - 2,
+        )
+        y = random.randrange(
+            2,
+            NUM_OF_GRIDS_Y - 2,
+        )
+        return Vector2(x, y)
+
     def move_body(self):
         new_head = self.head + self.vel
         self.head = new_head
@@ -117,29 +102,48 @@ class Snake:
             self.move_body()
         else:
             self.eat()
-
     def eat(self):
         new_head = fruit.pos + self.vel
         self.body = [new_head] + self.body
         self.head = self.body[0]
         self.new_block = False
+        fruit.spawn_fruit()
 
     def check_collision(self):
         if self.head == fruit.pos:
             self.new_block = True
 
+    def check_fail(self):
+        if self.head in self.body[1:]:
+            return True
+        if self.head.x < 1 or self.head.x >= NUM_OF_GRIDS_X - 1:
+            return True
+        elif self.head.y < 1 or self.head.y >= NUM_OF_GRIDS_Y - 1:
+            return True
+        return False
+
+
 class Fruit:
-    def __init__(self, cor):
+    def __init__(self):
         super().__init__()
-        self.pos = cor
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(FRUIT_COLOR)
         self.rect = self.image.get_rect()
-        self.rect.x = cor.x * GRID_SIZE
-        self.rect.y = cor.y * GRID_SIZE
+        self.spawn_fruit()
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
+
+    def spawn_fruit(self):
+        x = random.randrange(1, NUM_OF_GRIDS_X - 1)
+        y = random.randrange(1, NUM_OF_GRIDS_Y - 1)
+        self.pos = Vector2(x, y)
+        while self.pos in snake.body:
+            x = random.randrange(1, NUM_OF_GRIDS_X - 1)
+            y = random.randrange(1, NUM_OF_GRIDS_Y - 1)
+            self.pos = Vector2(x, y)
+        self.rect.x = self.pos.x * GRID_SIZE
+        self.rect.y = self.pos.y * GRID_SIZE
 
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -147,7 +151,7 @@ pygame.display.set_caption("Pretty Snake!")
 
 snake = Snake()
 
-fruit = Fruit(spawn_fruit())
+fruit = Fruit()
 
 
 def main():
@@ -166,7 +170,7 @@ def main():
 
         # Update
         snake.update()
-        if is_out(snake.head):
+        if snake.check_fail():
             quit_game()
         # Draw
         screen.fill(WHITE)
