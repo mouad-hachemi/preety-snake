@@ -5,6 +5,7 @@ from os import path
 
 # Paths
 fonts_dir = path.join(path.dirname(__file__), "fonts")
+sounds_dir = path.join(path.dirname(__file__), "sounds")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -126,6 +127,7 @@ class Snake:
             self.eat()
 
     def eat(self):
+        eat_sfx.play()
         new_head = fruit.pos + self.vel
         self.body = [new_head] + self.body
         self.head = self.body[0]
@@ -182,6 +184,10 @@ pygame.display.set_caption("Pretty Snake!")
 font = pygame.font.Font(path.join(fonts_dir, "KenneyHighSquare.ttf"), 22)
 font48 = pygame.font.Font(path.join(fonts_dir, "KenneyHighSquare.ttf"), 48)
 
+# Loading sounds.
+death_sfx = pygame.mixer.Sound(path.join(sounds_dir, 'death_sfx.wav'))
+eat_sfx = pygame.mixer.Sound(path.join(sounds_dir, 'eat_sfx.wav'))
+
 snake = Snake()
 
 fruit = Fruit()
@@ -210,6 +216,7 @@ def main():
                     if snake.vel != Vector2(1, 0)
                     else snake.vel,
                 }.get(event.key, Vector2(0, 0))
+                break
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
                     game_over = False
@@ -219,6 +226,7 @@ def main():
         # Update
         snake.update()
         if snake.check_fail():
+            death_sfx.play()
             snake.reset()
             game_over = True
             continue
